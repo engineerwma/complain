@@ -1,8 +1,26 @@
 // lib/email-templates.ts
+
+export interface Complaint {
+  complaintNumber: string;
+  customerName: string;
+  customerId: string;
+  policyNumber: string;
+  policyType: string;
+  description: string;
+  createdAt: string | Date;
+  dueDate?: string | Date;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export const emailTemplates = {
   complaintCreated: {
     subject: (complaintNumber: string) => `New Complaint Created - ${complaintNumber}`,
-    body: (complaint: any, assignedTo?: any) => `
+    body: (complaint: Complaint, assignedTo?: User) => `
       <!DOCTYPE html>
       <html>
       <head>
@@ -48,7 +66,7 @@ export const emailTemplates = {
 
   complaintAssignment: {
     subject: (complaintNumber: string) => `Complaint Assigned to You - ${complaintNumber}`,
-    body: (complaint: any, assignedTo: any) => `
+    body: (complaint: Complaint, assignedTo: User) => `
       <!DOCTYPE html>
       <html>
       <head>
@@ -100,7 +118,7 @@ export const emailTemplates = {
 
   slaReminder: {
     subject: (complaintNumber: string) => `SLA Reminder - ${complaintNumber}`,
-    body: (complaint: any, hours: number) => `
+    body: (complaint: Complaint, hours: number) => `
       <!DOCTYPE html>
       <html>
       <head>

@@ -1,6 +1,5 @@
 // types/next-auth.d.ts
 import { Role, Branch, LineOfBusiness } from "@prisma/client"
-import NextAuth from "next-auth"
 
 declare module "next-auth" {
   interface Session {

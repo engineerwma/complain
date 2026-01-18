@@ -1,6 +1,7 @@
 // lib/email.ts - Complete fixed version
 import { createTransport } from 'nodemailer';
 import { emailTemplates } from './email-templates';
+import { Complaint, User } from './email-templates'; // Import from email-templates.ts
 
 // Create Gmail transporter with port 587 (more reliable)
 function createTransporter() {
@@ -42,12 +43,11 @@ export async function testEmailConnection() {
     console.log('✅ Email connection successful');
     return true;
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Email connection FAILED:');
-    console.error('Error:', error.message);
     
-    if (error.response) {
-      console.error('SMTP Response:', error.response);
+    if (error instanceof Error) {
+      console.error('Error:', error.message);
     }
     
     return false;
@@ -88,20 +88,23 @@ async function sendEmail(to: string | string[], subject: string, html: string, r
     
     return result;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`❌ Email sending failed (Attempt ${retryCount + 1}):`);
-    console.error('Error:', error.message);
-    console.error('Code:', error.code);
     
-    // Retry for connection-related errors
-    if (retryCount < maxRetries && (
-      error.code === 'ECONNRESET' || 
-      error.code === 'ETIMEDOUT' ||
-      error.code === 'ESOCKET'
-    )) {
-      console.log(`🔄 Retrying... (${retryCount + 1}/${maxRetries})`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return sendEmail(to, subject, html, retryCount + 1);
+    if (error instanceof Error) {
+      console.error('Error:', error.message);
+      console.error('Code:', (error as any).code);
+      
+      // Retry for connection-related errors
+      if (retryCount < maxRetries && (
+        (error as any).code === 'ECONNRESET' || 
+        (error as any).code === 'ETIMEDOUT' ||
+        (error as any).code === 'ESOCKET'
+      )) {
+        console.log(`🔄 Retrying... (${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return sendEmail(to, subject, html, retryCount + 1);
+      }
     }
     
     throw error;
@@ -112,16 +115,39 @@ async function sendEmail(to: string | string[], subject: string, html: string, r
   }
 }
 
+// Define interfaces for email parameters
+interface ComplaintCreatedEmailParams {
+  to: string[];
+  complaint: Complaint;
+  assignedTo?: User;
+}
+
+interface ComplaintAssignmentEmailParams {
+  to: string;
+  complaint: Complaint;
+  assignedTo?: User;
+}
+
+interface SLAReminderEmailParams {
+  to: string[];
+  complaint: Complaint;
+  hours: number;
+}
+
+interface SLABreachEmailParams {
+  to: string;
+  userName: string;
+  complaintNumber: string;
+  customerName: string;
+  dueDate: Date;
+}
+
 // Email functions
 export async function sendComplaintCreatedEmail({
   to,
   complaint,
   assignedTo
-}: {
-  to: string[]
-  complaint: any
-  assignedTo?: any
-}) {
+}: ComplaintCreatedEmailParams) {
   try {
     const subject = emailTemplates.complaintCreated.subject(complaint.complaintNumber);
     const html = emailTemplates.complaintCreated.body(complaint, assignedTo);
@@ -137,14 +163,20 @@ export async function sendComplaintCreatedEmail({
 
 export async function sendComplaintAssignmentEmail({
   to,
-  complaint
-}: {
-  to: string
-  complaint: any
-}) {
+  complaint,
+  assignedTo
+}: ComplaintAssignmentEmailParams) {
   try {
     const subject = emailTemplates.complaintAssignment.subject(complaint.complaintNumber);
-    const html = emailTemplates.complaintAssignment.body(complaint, { name: to.split('@')[0] });
+    
+    // Use provided assignedTo or create a basic user object from email
+    const user = assignedTo || {
+      id: '',
+      name: to.split('@')[0],
+      email: to
+    };
+    
+    const html = emailTemplates.complaintAssignment.body(complaint, user);
     
     await sendEmail(to, subject, html);
     console.log(`✅ Assignment email sent to ${to}`);
@@ -159,11 +191,7 @@ export async function sendSLAReminderEmail({
   to,
   complaint,
   hours
-}: {
-  to: string[]
-  complaint: any
-  hours: number
-}) {
+}: SLAReminderEmailParams) {
   try {
     const subject = emailTemplates.slaReminder.subject(complaint.complaintNumber);
     const html = emailTemplates.slaReminder.body(complaint, hours);
@@ -183,13 +211,7 @@ export async function sendSLABreachEmail({
   complaintNumber,
   customerName,
   dueDate
-}: {
-  to: string
-  userName: string
-  complaintNumber: string
-  customerName: string
-  dueDate: Date
-}) {
+}: SLABreachEmailParams) {
   try {
     const subject = `SLA BREACH ALERT - ${complaintNumber}`;
     const html = `

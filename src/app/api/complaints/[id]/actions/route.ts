@@ -30,7 +30,7 @@ export async function POST(
     console.log(`Adding action to complaint ${complaintId} by user ${session.user.id}`)
 
     // Verify the complaint exists and user has access
-    let whereClause: any = { id: complaintId }
+    const whereClause: any = { id: complaintId }
 
     if (session.user.role === "USER") {
       // Regular users can only add actions to complaints assigned to them

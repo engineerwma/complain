@@ -18,7 +18,7 @@ export async function GET(
     const { id } = params
 
     // Base where clause based on user role
-    let whereClause: any = { id }
+    const whereClause: any = { id }
 
     if (session.user.role === "USER") {
       whereClause.assignedToId = session.user.id
