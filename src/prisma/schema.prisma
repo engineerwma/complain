@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  branchId      String?
+  branch        Branch?  @relation(fields: [branchId], references: [id])
+  lineOfBusinessId String?
+  lineOfBusiness LineOfBusiness? @relation(fields: [lineOfBusinessId], references: [id])
+  
+  assignedComplaints Complaint[] @relation("AssignedComplaints")
+  createdComplaints  Complaint[] @relation("CreatedComplaints")
+  actions            ComplaintAction[]
+  notifications      Notification[]
+
+  @@map("users")
+}
+
+model Branch {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  complaints Complaint[]
+
+  @@map("branches")
+}
+
+model LineOfBusiness {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  complaints Complaint[]
+
+  @@map("line_of_businesses")
+}
+
+model ComplaintType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  complaints Complaint[]
+
+  @@map("complaint_types")
+}
+
+model ComplaintStatus {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  complaints Complaint[]
+
+  @@map("complaint_statuses")
+}
+
+model Complaint {
+  id               String            @id @default(cuid())
+  complaintNumber  String            @unique
+  customerName     String
+  customerId       String
+  policyNumber     String
+  policyType       String
+  description      String
+  channel          Channel
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  dueDate          DateTime?
+  resolvedAt       DateTime?
+  
+  // Relations
+  typeId           String
+  type             ComplaintType     @relation(fields: [typeId], references: [id])
+  statusId         String
+  status           ComplaintStatus   @relation(fields: [statusId], references: [id])
+  branchId         String
+  branch           Branch            @relation(fields: [branchId], references: [id])
+  lineOfBusinessId String
+  lineOfBusiness   LineOfBusiness    @relation(fields: [lineOfBusinessId], references: [id])
+  createdById      String
+  createdBy        User              @relation("CreatedComplaints", fields: [createdById], references: [id])
+  assignedToId     String?
+  assignedTo       User?             @relation("AssignedComplaints", fields: [assignedToId], references: [id])
+  actions          ComplaintAction[]
+  attachments      Attachment[]
+  notifications    Notification[]
+
+  @@map("complaints")
+}
+
+model ComplaintAction {
+  id          String   @id @default(cuid())
+  description String
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@map("complaint_actions")
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  filename  String
+  path      String
+  mimetype  String
+  size      Int
+  createdAt DateTime @default(now())
+  
+  // Relations
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  title     String
+  message   String
+    type      String?          // Add this field
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  
+  // Relations
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  complaintId String?
+  complaint  Complaint? @relation(fields: [complaintId], references: [id])
+
+  @@map("notifications")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Channel {
+  EMAIL
+  PHONE
+  WEB
+  MOBILE
+  IN_PERSON
+}
