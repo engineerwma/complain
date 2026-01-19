@@ -89,7 +89,7 @@ export async function GET() {
           where: { role: "ADMIN" },
           select: { email: true }
         })
-        admins.forEach(admin => {
+        admins.forEach((admin: any) => { // ✅ Add type annotation here
           if (admin.email) recipients.add(admin.email)
         })
 
@@ -137,7 +137,7 @@ export async function GET() {
           
           console.log(`✅ Sent 2-hour reminder for complaint ${complaint.complaintNumber}`)
         }
-      } catch (error) {
+      } catch (error: any) { // ✅ Also fix this catch block
         console.error(`❌ Error processing complaint ${complaint.complaintNumber}:`, error)
         // Continue with next complaint even if one fails
       }
@@ -151,7 +151,7 @@ export async function GET() {
       results,
       timestamp: now.toISOString()
     })
-  } catch (error) {
+  } catch (error: any) { // ✅ Fix main catch block too
     console.error("❌ Error checking 2-hour SLA reminders:", error)
     return NextResponse.json(
       { 
