@@ -6,16 +6,18 @@ import { prisma } from "@/lib/prisma"
 // POST /api/complaints/[id]/actions - Add action to complaint
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params is now a Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ Await the params first!
+    
     const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const complaintId = params.id
+    const complaintId = id // ✅ Use the extracted id
     const body = await request.json()
     const { description } = body
 

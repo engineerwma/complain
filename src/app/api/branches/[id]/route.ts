@@ -5,9 +5,11 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // params is now a Promise
 ) {
   try {
+    const { id } = await context.params; // Await the params
+    
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== "ADMIN") {
@@ -15,7 +17,7 @@ export async function GET(
     }
 
     const branch = await prisma.branch.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -42,9 +44,11 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // params is now a Promise
 ) {
   try {
+    const { id } = await context.params; // Await the params
+    
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== "ADMIN") {
@@ -55,7 +59,7 @@ export async function PUT(
     const { name, description } = body
 
     const branch = await prisma.branch.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         description: description || null
@@ -82,9 +86,11 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // params is now a Promise
 ) {
   try {
+    const { id } = await context.params; // Await the params
+    
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== "ADMIN") {
@@ -93,7 +99,7 @@ export async function DELETE(
 
     // Check if branch has users or complaints
     const branch = await prisma.branch.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -115,7 +121,7 @@ export async function DELETE(
     }
 
     await prisma.branch.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: "Branch deleted successfully" })
