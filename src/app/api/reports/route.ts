@@ -266,36 +266,37 @@ export async function GET(request: Request) {
     })
 
     // Get top users
-    const topUsers = await prisma.user.findMany({
+  // Get top users
+const topUsers = await prisma.user.findMany({
+  where: {
+    role: "USER"
+  },
+  include: {
+    assignedComplaints: {
       where: {
-        role: "USER"
+        createdAt: {
+          gte: startDate
+        }
       },
       include: {
-        assignedComplaints: {
-          where: {
-            createdAt: {
-              gte: startDate
-            }
-          },
-          include: {
-            status: true
-          }
-        }
+        status: true
       }
-    })
+    }
+  }
+})
 
-    const topUsersData = topUsers.map((user: any) => {
-      const resolved = user.assignedComplaints.filter((c: any) => c.status.name === "RESOLVED").length
-      const pending = user.assignedComplaints.filter((c: any) => c.status.name !== "RESOLVED").length
-      
-      return {
-        name: user.name,
-        resolved,
-        pending
-      }
-    }).filter(user => user.resolved > 0 || user.pending > 0)
-      .sort((a: any, b: any) => b.resolved - a.resolved)
-      .slice(0, 10)
+const topUsersData = topUsers.map((user: any) => {
+  const resolved = user.assignedComplaints.filter((c: any) => c.status.name === "RESOLVED").length
+  const pending = user.assignedComplaints.filter((c: any) => c.status.name !== "RESOLVED").length
+  
+  return {
+    name: user.name,
+    resolved,
+    pending
+  }
+}).filter((user: any) => user.resolved > 0 || user.pending > 0) // This was missing the type
+  .sort((a: any, b: any) => b.resolved - a.resolved)
+  .slice(0, 10)
 
     // Get channel distribution
     const channelDistribution = await prisma.complaint.groupBy({
