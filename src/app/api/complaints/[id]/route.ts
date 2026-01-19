@@ -4,76 +4,19 @@ import { authOptions } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
 // GET single complaint by ID
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { id } = params
-
-    // Base where clause based on user role
-    const whereClause: any = { id }
-
-    if (session.user.role === "USER") {
-      whereClause.assignedToId = session.user.id
-    } 
-    // ADMIN can see all complaints, no additional filter needed
-
-    const complaint = await prisma.complaint.findUnique({
-      where: whereClause,
-      include: {
-        status: true,
-        type: true,
-        branch: true,
-        lineOfBusiness: true,
-        assignedTo: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        createdBy: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      }
-    })
-
-    if (!complaint) {
-      return NextResponse.json({ error: "Complaint not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(complaint)
-  } catch (error) {
-    console.error("Error fetching complaint:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
-  }
-}
-
-// UPDATE complaint by ID
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
+    
     const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
     const body = await request.json()
 
     const {
@@ -154,7 +97,7 @@ export async function PUT(
     })
 
     return NextResponse.json(updatedComplaint)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating complaint:", error)
     
     // Handle specific Prisma errors
@@ -165,12 +108,31 @@ export async function PUT(
       )
     }
     
+    // Handle other Prisma errors
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: "Invalid reference data. Please check the selected options." },
+        { status: 400 }
+      )
+    }
+    
+    // Handle unique constraint violation
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: "A complaint with similar details already exists" },
+        { status: 409 }
+      )
+    }
+    
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     )
   }
-}
 
-// You can remove the POST method from this file since it should only handle individual complaints
-// The POST method for creating complaints should be in /app/api/complaints/route.ts
+    
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
