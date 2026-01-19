@@ -111,38 +111,45 @@ export default function EditUserPage() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
+// Update the handleSubmit function
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setIsSaving(true)
 
-    try {
-      // Only include password if it's provided
-      const submitData = { ...formData }
-      if (!submitData.password) {
-        delete submitData.password
-        delete submitData.confirmPassword
-      }
-
-      const response = await fetch(`/api/users/${params.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(submitData)
-      })
-
-      if (response.ok) {
-        router.push("/users")
-      } else {
-        const errorData = await response.json()
-        console.error("Failed to update user:", errorData.error)
-      }
-    } catch (error) {
-      console.error("Error updating user:", error)
-    } finally {
-      setIsSaving(false)
+  try {
+    // Create a type for the submit data with optional password fields
+    type SubmitData = Omit<typeof formData, 'password' | 'confirmPassword'> & {
+      password?: string;
+      confirmPassword?: string;
+    };
+    
+    const submitData: SubmitData = { ...formData }
+    
+    if (!submitData.password) {
+      delete submitData.password
+      delete submitData.confirmPassword
     }
+
+    const response = await fetch(`/api/users/${params.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(submitData)
+    })
+
+    if (response.ok) {
+      router.push("/users")
+    } else {
+      const errorData = await response.json()
+      console.error("Failed to update user:", errorData.error)
+    }
+  } catch (error) {
+    console.error("Error updating user:", error)
+  } finally {
+    setIsSaving(false)
   }
+}
 
   if (!session || session.user.role !== "ADMIN") {
     return (
