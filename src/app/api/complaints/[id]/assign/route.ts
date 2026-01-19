@@ -110,9 +110,11 @@ async function assignComplaintAutomatically(complaintId: string) {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params is now a Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ Await the params first!
+    
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -124,7 +126,7 @@ export async function POST(
 
     // Check if complaint exists
     const complaint = await prisma.complaint.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!complaint) {
@@ -140,7 +142,7 @@ export async function POST(
 
       // Update complaint assignment
       const updatedComplaint = await prisma.complaint.update({
-        where: { id: params.id },
+        where: { id },
         data: { assignedToId },
         include: {
           status: true,
@@ -185,7 +187,7 @@ export async function POST(
     } else {
       // If no assignedToId is provided, do automatic assignment
       try {
-        const updatedComplaint = await assignComplaintAutomatically(params.id);
+        const updatedComplaint = await assignComplaintAutomatically(id);
 
         // Create notification for the assigned user
         if (updatedComplaint.assignedTo) {

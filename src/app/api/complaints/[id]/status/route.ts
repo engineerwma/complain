@@ -5,9 +5,11 @@ import { prisma } from "@/lib/prisma"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params is now a Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ Await the params first!
+    
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -19,7 +21,7 @@ export async function POST(
 
     // Check if complaint exists and user has permission
     const complaint = await prisma.complaint.findUnique({
-      where: { id: params.id }
+      where: { id } // ✅ Use id instead of params.id
     })
 
     if (!complaint) {
@@ -51,7 +53,7 @@ export async function POST(
     }
 
     const updatedComplaint = await prisma.complaint.update({
-      where: { id: params.id },
+      where: { id }, // ✅ Use id instead of params.id
       data: updateData,
       include: {
         status: true,
