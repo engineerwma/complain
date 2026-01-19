@@ -20,11 +20,11 @@ export async function GET() {
           success: data.success,
           message: data.message
         })
-      } catch (error) {
+      } catch (error: any) { // ✅ Add type annotation here
         results.push({
           endpoint,
           success: false,
-          error: error.message
+          error: error.message // ✅ Now TypeScript knows error has a message property
         })
       }
     }
@@ -41,7 +41,7 @@ export async function GET() {
       ]
     })
 
-  } catch (error) {
+  } catch (error: any) { // ✅ Also fix the outer catch block
     console.error('Cron test failed:', error)
     return NextResponse.json({
       success: false,
