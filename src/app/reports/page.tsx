@@ -176,8 +176,7 @@ export default function ReportsPage() {
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="count"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
+                            label={(entry: any) => `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`}   >
                           {reportData.complaintsByStatus.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
