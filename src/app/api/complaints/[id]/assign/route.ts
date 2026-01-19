@@ -59,7 +59,7 @@ async function assignComplaintAutomatically(complaintId: string) {
 });
 
   // Sort users by the number of active complaints (ascending)
-  candidateUsers.sort((a, b) => 
+  candidateUsers.sort((a:any, b:any) => 
     a._count.assignedComplaints - b._count.assignedComplaints
   );
 
