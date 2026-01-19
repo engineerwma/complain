@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
+type ResolvedComplaint = {
+  createdAt: Date;
+  resolvedAt: Date | null;
+};
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -65,7 +70,7 @@ export async function GET() {
 
     let avgResolutionTime = 0
     if (resolvedComplaintsData.length > 0) {
-      const totalTime = resolvedComplaintsData.reduce((sum, complaint) => {
+      const totalTime = resolvedComplaintsData.reduce((sum: number, complaint: ResolvedComplaint) => {
         if (complaint.resolvedAt) {
           const diffInMs = complaint.resolvedAt.getTime() - complaint.createdAt.getTime()
           const diffInHours = diffInMs / (1000 * 60 * 60)
@@ -83,7 +88,7 @@ export async function GET() {
       overdueComplaints,
       avgResolutionTime
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching dashboard stats:", error)
     return NextResponse.json(
       { error: "Internal server error" },
