@@ -85,7 +85,7 @@ export async function GET() {
           where: { role: "ADMIN" },
           select: { email: true }
         })
-        admins.forEach(admin => {
+        admins.forEach((admin: any) => { // ✅ Add type annotation
           if (admin.email) recipients.add(admin.email)
         })
 
@@ -130,7 +130,7 @@ export async function GET() {
           
           console.log(`✅ Sent 1-hour reminder for complaint ${complaint.complaintNumber}`)
         }
-      } catch (error) {
+      } catch (error: any) { // ✅ Add type annotation
         console.error(`❌ Error processing complaint ${complaint.complaintNumber}:`, error)
       }
     }
@@ -143,7 +143,7 @@ export async function GET() {
       results,
       timestamp: now.toISOString()
     })
-  } catch (error) {
+  } catch (error: any) { // ✅ Add type annotation
     console.error("❌ Error checking SLA reminders:", error)
     return NextResponse.json(
       { 
