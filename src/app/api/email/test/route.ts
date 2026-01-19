@@ -23,14 +23,14 @@ export async function GET() {
     console.log('✅ Environment variables check passed')
 
     // Step 2: Test SMTP connection
-    console.log('🔌 Testing SMTP connection to Office 365...')
+    console.log('🔌 Testing SMTP connection...')
     const connectionSuccess = await testEmailConnection()
     
     if (!connectionSuccess) {
       console.error('❌ SMTP connection failed')
       return NextResponse.json({
         success: false, 
-        error: "SMTP connection failed - check your credentials and Office 365 settings",
+        error: "SMTP connection failed - check your credentials and settings",
         step: "connection_test"
       }, { status: 500 })
     }
@@ -47,13 +47,42 @@ export async function GET() {
       policyType: "General",
       description: "This is a test complaint to verify email configuration",
       createdAt: new Date(),
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      // Add any other properties your Complaint type expects
+      branch: {
+        name: "Test Branch"
+      },
+      lineOfBusiness: {
+        name: "Test LOB"
+      },
+      status: {
+        name: "PENDING"
+      },
+      type: {
+        name: "Test Type"
+      },
+      createdBy: {
+        name: "Test Creator",
+        email: process.env.EMAIL_USER!
+      }
+    }
+
+    // Create a proper User object based on what email-templates expects
+    const testAssignedTo = {
+      id: "test-id-123", // Required by User type
+      name: "Test User",
+      email: process.env.EMAIL_USER!, // Required by User type
+      role: "USER", // Likely required
+      // Add any other required properties from your User type
+      branch: {
+        name: "Test Branch"
+      }
     }
 
     const emailSent = await sendComplaintCreatedEmail({
       to: [process.env.EMAIL_USER!],
       complaint: testComplaint,
-      assignedTo: { name: "Test User" }
+      assignedTo: testAssignedTo // Now matches the User type
     })
 
     if (!emailSent) {
