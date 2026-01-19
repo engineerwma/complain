@@ -54,9 +54,9 @@ async function assignComplaintAutomatically(complaintId: string) {
   }
 
   // Log candidate users for debugging
-  candidateUsers.forEach(user => {
-    console.log(`Candidate: ${user.name} (${user.role}) with ${user._count.assignedComplaints} active complaints`);
-  });
+ candidateUsers.forEach((user: any) => { // Add type annotation here
+  console.log(`Candidate: ${user.name} (${user.role}) with ${user._count.assignedComplaints} active complaints`);
+});
 
   // Sort users by the number of active complaints (ascending)
   candidateUsers.sort((a, b) => 
