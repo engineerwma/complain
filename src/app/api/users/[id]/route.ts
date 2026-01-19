@@ -6,9 +6,11 @@ import bcrypt from "bcryptjs"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params أصبح Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ انتظر params أولاً!
+    
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== "ADMIN") {
@@ -16,7 +18,7 @@ export async function GET(
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id }, // ✅ استخدم id بدلاً من params.id
       include: {
         branch: {
           select: {
@@ -58,9 +60,11 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params أصبح Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ انتظر params أولاً!
+    
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== "ADMIN") {
@@ -72,7 +76,7 @@ export async function PUT(
 
     // Get the current user
     const currentUser = await prisma.user.findUnique({
-      where: { id: params.id }
+      where: { id } // ✅ استخدم id بدلاً من params.id
     })
 
     if (!currentUser) {
@@ -95,7 +99,7 @@ export async function PUT(
 
     // Update the user
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id }, // ✅ استخدم id بدلاً من params.id
       data: updateData,
       include: {
         branch: {
@@ -134,9 +138,11 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params أصبح Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ انتظر params أولاً!
+    
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== "ADMIN") {
@@ -145,7 +151,7 @@ export async function DELETE(
 
     // Check if user has assigned complaints
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id }, // ✅ استخدم id بدلاً من params.id
       include: {
         _count: {
           select: {
@@ -167,14 +173,14 @@ export async function DELETE(
     }
 
     // Don't allow deleting the current user
-    if (session.user.id === params.id) {
+    if (session.user.id === id) { // ✅ استخدم id بدلاً من params.id
       return NextResponse.json({ 
         error: "Cannot delete your own account" 
       }, { status: 400 })
     }
 
     await prisma.user.delete({
-      where: { id: params.id }
+      where: { id } // ✅ استخدم id بدلاً من params.id
     })
 
     return NextResponse.json({ message: "User deleted successfully" })
