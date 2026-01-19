@@ -7,14 +7,17 @@ import { unlink } from "fs/promises";
 import path from "path";
 
 // Export the config if needed
-export const dynamic = 'force-dynamic'; // or 'auto' | 'force-static'
-export const revalidate = 0; // Set revalidation time
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // params is now a Promise!
 ) {
   try {
+    // Await the params first!
+    const { id } = await context.params;
+    
     const session = await getServerSession(authOptions);
     
     if (!session) {
@@ -23,7 +26,7 @@ export async function DELETE(
 
     // Get attachment details
     const attachment = await prisma.attachment.findUnique({
-      where: { id: context.params.id },
+      where: { id },
       include: {
         complaint: {
           select: {
@@ -56,7 +59,7 @@ export async function DELETE(
 
     // Delete attachment from database
     await prisma.attachment.delete({
-      where: { id: context.params.id }
+      where: { id }
     });
 
     return NextResponse.json({ message: "Attachment deleted successfully" });
@@ -69,14 +72,17 @@ export async function DELETE(
   }
 }
 
-// Add other HTTP methods if needed
+// Fix the GET handler too
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // params is a Promise!
 ) {
   try {
+    // Await the params
+    const { id } = await context.params;
+    
     const attachment = await prisma.attachment.findUnique({
-      where: { id: context.params.id }
+      where: { id }
     });
 
     if (!attachment) {
