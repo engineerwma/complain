@@ -75,9 +75,10 @@ async function assignComplaintAutomatically(complaintId: string, branchId: strin
     console.log(`Found ${candidateUsers.length} candidate users for assignment`);
 
     // Log each candidate user for debugging
-    candidateUsers.forEach(user => {
-      console.log(`- ${user.name} (${user.role}): ${user._count.assignedComplaints} active complaints`);
-    });
+    // Log each candidate user for debugging
+candidateUsers.forEach((user: any) => {
+  console.log(`- ${user.name} (${user.role}): ${user._count.assignedComplaints} active complaints`);
+});
 
     if (candidateUsers.length === 0) {
       console.log("No suitable users found for automatic assignment");
