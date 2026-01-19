@@ -75,10 +75,9 @@ async function assignComplaintAutomatically(complaintId: string, branchId: strin
     console.log(`Found ${candidateUsers.length} candidate users for assignment`);
 
     // Log each candidate user for debugging
-    // Log each candidate user for debugging
-candidateUsers.forEach((user: any) => {
-  console.log(`- ${user.name} (${user.role}): ${user._count.assignedComplaints} active complaints`);
-});
+    candidateUsers.forEach((user: any) => {
+      console.log(`- ${user.name} (${user.role}): ${user._count.assignedComplaints} active complaints`);
+    });
 
     if (candidateUsers.length === 0) {
       console.log("No suitable users found for automatic assignment");
@@ -149,7 +148,7 @@ async function sendComplaintNotifications(complaint: any, assignedTo: any | null
     const admins = await prisma.user.findMany({
       where: { role: "ADMIN" }
     });
-    recipients.push(...admins.map(admin => admin.email));
+    recipients.push(...admins.map((admin: any) => admin.email));
 
     // Notify branch manager if applicable
     if (complaint.branchId) {
@@ -159,7 +158,7 @@ async function sendComplaintNotifications(complaint: any, assignedTo: any | null
           role: { in: ["ADMIN", "USER"] }
         }
       });
-      recipients.push(...branchUsers.map(user => user.email));
+      recipients.push(...branchUsers.map((user: any) => user.email));
     }
 
     // Remove duplicates and the creator's email if present
@@ -481,7 +480,15 @@ export async function GET(request: Request) {
 
     const total = await prisma.complaint.count({ where: whereClause })
 
-    return NextResponse.json(complaints)
+    return NextResponse.json({
+      complaints,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    })
   } catch (error) {
     console.error("Error fetching complaints:", error)
     return NextResponse.json(
