@@ -6,20 +6,20 @@ import { prisma } from "@/lib/prisma"
 // GET single notification
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params أصبح Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ انتظر params أولاً!
+    
     const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
-
     const notification = await prisma.notification.findFirst({
       where: {
-        id,
+        id, // ✅ استخدم id بدلاً من params.id
         userId: session.user.id
       },
       include: {
@@ -49,20 +49,20 @@ export async function GET(
 // Mark notification as read
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params أصبح Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ انتظر params أولاً!
+    
     const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
-
     const notification = await prisma.notification.findFirst({
       where: {
-        id,
+        id, // ✅ استخدم id بدلاً من params.id
         userId: session.user.id
       }
     })
@@ -72,7 +72,7 @@ export async function PUT(
     }
 
     const updatedNotification = await prisma.notification.update({
-      where: { id },
+      where: { id }, // ✅ استخدم id بدلاً من params.id
       data: {
         read: true
       },
@@ -99,20 +99,20 @@ export async function PUT(
 // Delete notification
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ params أصبح Promise
 ) {
   try {
+    const { id } = await context.params; // ✅ انتظر params أولاً!
+    
     const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = params
-
     const notification = await prisma.notification.findFirst({
       where: {
-        id,
+        id, // ✅ استخدم id بدلاً من params.id
         userId: session.user.id
       }
     })
@@ -122,7 +122,7 @@ export async function DELETE(
     }
 
     await prisma.notification.delete({
-      where: { id }
+      where: { id } // ✅ استخدم id بدلاً من params.id
     })
 
     return NextResponse.json({ message: "Notification deleted" })
