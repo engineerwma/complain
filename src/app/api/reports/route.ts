@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       }
     })
 
-    const statusIds = complaintsByStatus.map((item: any) => item.statusId) // ✅ Add type
+    const statusIds = complaintsByStatus.map((item: any) => item.statusId)
     const statuses = await prisma.complaintStatus.findMany({
       where: {
         id: {
@@ -68,8 +68,8 @@ export async function GET(request: Request) {
       "CLOSED": "#FF8042"
     }
 
-    const complaintsByStatusData = complaintsByStatus.map((item: any) => { // ✅ Add type
-      const status = statuses.find(s => s.id === item.statusId)
+    const complaintsByStatusData = complaintsByStatus.map((item: any) => {
+      const status = statuses.find((s: any) => s.id === item.statusId)
       return {
         name: status?.name || "Unknown",
         count: item._count.statusId,
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
       }
     })
 
-    const typeIds = complaintsByType.map((item: any) => item.typeId) // ✅ Add type
+    const typeIds = complaintsByType.map((item: any) => item.typeId)
     const types = await prisma.complaintType.findMany({
       where: {
         id: {
@@ -95,8 +95,8 @@ export async function GET(request: Request) {
       }
     })
 
-    const complaintsByTypeData = complaintsByType.map((item: any) => { // ✅ Add type
-      const type = types.find(t => t.id === item.typeId)
+    const complaintsByTypeData = complaintsByType.map((item: any) => {
+      const type = types.find((t: any) => t.id === item.typeId)
       return {
         name: type?.name || "Unknown",
         count: item._count.typeId
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
       }
     })
 
-    const branchIds = complaintsByBranch.map((item: any) => item.branchId) // ✅ Add type
+    const branchIds = complaintsByBranch.map((item: any) => item.branchId)
     const branches = await prisma.branch.findMany({
       where: {
         id: {
@@ -121,8 +121,8 @@ export async function GET(request: Request) {
       }
     })
 
-    const complaintsByBranchData = complaintsByBranch.map((item: any) => { // ✅ Add type
-      const branch = branches.find(b => b.id === item.branchId)
+    const complaintsByBranchData = complaintsByBranch.map((item: any) => {
+      const branch = branches.find((b: any) => b.id === item.branchId)
       return {
         name: branch?.name || "Unknown",
         count: item._count.branchId
@@ -138,7 +138,7 @@ export async function GET(request: Request) {
       }
     })
 
-    const lobIds = complaintsByLineOfBusiness.map((item: any) => item.lineOfBusinessId) // ✅ Add type
+    const lobIds = complaintsByLineOfBusiness.map((item: any) => item.lineOfBusinessId)
     const linesOfBusiness = await prisma.lineOfBusiness.findMany({
       where: {
         id: {
@@ -147,8 +147,8 @@ export async function GET(request: Request) {
       }
     })
 
-    const complaintsByLineOfBusinessData = complaintsByLineOfBusiness.map((item: any) => { // ✅ Add type
-      const lob = linesOfBusiness.find(l => l.id === item.lineOfBusinessId)
+    const complaintsByLineOfBusinessData = complaintsByLineOfBusiness.map((item: any) => {
+      const lob = linesOfBusiness.find((l: any) => l.id === item.lineOfBusinessId)
       return {
         name: lob?.name || "Unknown",
         count: item._count.lineOfBusinessId
@@ -168,7 +168,7 @@ export async function GET(request: Request) {
 
     // Format the trend data by date
     const trendData: { [key: string]: number } = {}
-    complaintsTrend.forEach((complaint: any) => { // ✅ Add type
+    complaintsTrend.forEach((complaint: any) => {
       const date = new Date(complaint.createdAt).toISOString().split('T')[0]
       if (trendData[date]) {
         trendData[date] += 1
@@ -211,7 +211,7 @@ export async function GET(request: Request) {
 
     const resolutionTimeByType: { [key: string]: { total: number; count: number } } = {}
     
-    resolvedComplaints.forEach((complaint: any) => { // ✅ Add type
+    resolvedComplaints.forEach((complaint: any) => {
       if (complaint.resolvedAt) {
         const typeName = complaint.type.name
         const resolutionTime = complaint.resolvedAt.getTime() - complaint.createdAt.getTime()
@@ -284,9 +284,9 @@ export async function GET(request: Request) {
       }
     })
 
-    const topUsersData = topUsers.map((user: any) => { // ✅ Add type
-      const resolved = user.assignedComplaints.filter((c: any) => c.status.name === "RESOLVED").length // ✅ Add type
-      const pending = user.assignedComplaints.filter((c: any) => c.status.name !== "RESOLVED").length // ✅ Add type
+    const topUsersData = topUsers.map((user: any) => {
+      const resolved = user.assignedComplaints.filter((c: any) => c.status.name === "RESOLVED").length
+      const pending = user.assignedComplaints.filter((c: any) => c.status.name !== "RESOLVED").length
       
       return {
         name: user.name,
@@ -294,7 +294,7 @@ export async function GET(request: Request) {
         pending
       }
     }).filter(user => user.resolved > 0 || user.pending > 0)
-      .sort((a, b) => b.resolved - a.resolved)
+      .sort((a: any, b: any) => b.resolved - a.resolved)
       .slice(0, 10)
 
     // Get channel distribution
@@ -306,7 +306,7 @@ export async function GET(request: Request) {
       }
     })
 
-    const channelDistributionData = channelDistribution.map((item: any) => ({ // ✅ Add type
+    const channelDistributionData = channelDistribution.map((item: any) => ({
       name: item.channel,
       count: item._count.channel
     }))
@@ -325,7 +325,7 @@ export async function GET(request: Request) {
       topUsers: topUsersData,
       channelDistribution: channelDistributionData
     })
-  } catch (error: any) { // ✅ Add type annotation to catch block
+  } catch (error: any) {
     console.error("Error fetching report data:", error)
     return NextResponse.json(
       { error: "Internal server error" },
