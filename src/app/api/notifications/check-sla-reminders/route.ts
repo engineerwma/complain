@@ -85,14 +85,28 @@ export async function GET() {
           where: { role: "ADMIN" },
           select: { email: true }
         })
-        admins.forEach((admin: any) => { // ✅ Add type annotation
+        admins.forEach(admin => {
           if (admin.email) recipients.add(admin.email)
         })
 
         if (recipients.size > 0) {
+          // Create a properly typed complaint object for the email function
+          const emailComplaint = {
+            ...complaint,
+            dueDate: complaint.dueDate || undefined, // Convert null to undefined
+            createdAt: complaint.createdAt,
+            updatedAt: complaint.updatedAt,
+            branch: complaint.branch,
+            lineOfBusiness: complaint.lineOfBusiness,
+            status: complaint.status,
+            createdBy: complaint.createdBy,
+            assignedTo: complaint.assignedTo,
+            notifications: complaint.notifications
+          }
+
           await sendSLAReminderEmail({
             to: Array.from(recipients),
-            complaint: complaint,
+            complaint: emailComplaint,
             hours: hoursSinceCreation
           })
 
@@ -130,7 +144,7 @@ export async function GET() {
           
           console.log(`✅ Sent 1-hour reminder for complaint ${complaint.complaintNumber}`)
         }
-      } catch (error: any) { // ✅ Add type annotation
+      } catch (error) {
         console.error(`❌ Error processing complaint ${complaint.complaintNumber}:`, error)
       }
     }
@@ -143,7 +157,7 @@ export async function GET() {
       results,
       timestamp: now.toISOString()
     })
-  } catch (error: any) { // ✅ Add type annotation
+  } catch (error) {
     console.error("❌ Error checking SLA reminders:", error)
     return NextResponse.json(
       { 
