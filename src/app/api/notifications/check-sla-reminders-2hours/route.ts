@@ -89,15 +89,21 @@ export async function GET() {
           where: { role: "ADMIN" },
           select: { email: true }
         })
-        admins.forEach(admin => {
+        admins.forEach((admin: any) => {
           if (admin.email) recipients.add(admin.email)
         })
 
         if (recipients.size > 0) {
+          // FIX: Create a properly typed complaint object
+          const emailComplaint = {
+            ...complaint,
+            dueDate: complaint.dueDate || undefined // Convert null to undefined
+          }
+
           // Send email reminder
           await sendSLAReminderEmail({
             to: Array.from(recipients),
-            complaint: complaint,
+            complaint: emailComplaint, // Use the fixed object
             hours: hoursSinceCreation
           })
 
@@ -137,7 +143,7 @@ export async function GET() {
           
           console.log(`✅ Sent 2-hour reminder for complaint ${complaint.complaintNumber}`)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Error processing complaint ${complaint.complaintNumber}:`, error)
         // Continue with next complaint even if one fails
       }
@@ -151,7 +157,7 @@ export async function GET() {
       results,
       timestamp: now.toISOString()
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Error checking 2-hour SLA reminders:", error)
     return NextResponse.json(
       { 
