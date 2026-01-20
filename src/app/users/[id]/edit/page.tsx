@@ -156,7 +156,7 @@ export default function EditUserPage() {
     setIsSaving(false)
   }
 }
-}
+
 
   if (!session || session.user.role !== "ADMIN") {
     return (
