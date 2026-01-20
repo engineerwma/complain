@@ -112,20 +112,26 @@ export default function EditUserPage() {
   }
 
 // Update the handleSubmit function
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
   setIsSaving(true)
 
   try {
-    // Create a type for the submit data with optional password fields
-    type SubmitData = Omit<typeof formData, 'password' | 'confirmPassword'> & {
-      password?: string;
-      confirmPassword?: string;
-    };
+    // Create a new object with optional password fields
+    type SubmitDataType = {
+      email: string
+      name: string
+      role: string
+      branchId: string
+      lineOfBusinessId: string
+      password?: string
+      confirmPassword?: string
+    }
     
-    const submitData: SubmitData = { ...formData }
+    const submitData: SubmitDataType = { ...formData }
     
     if (!submitData.password) {
+      // Now TypeScript knows these are optional
       delete submitData.password
       delete submitData.confirmPassword
     }
@@ -149,6 +155,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   } finally {
     setIsSaving(false)
   }
+}
 }
 
   if (!session || session.user.role !== "ADMIN") {
