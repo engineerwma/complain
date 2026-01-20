@@ -3,11 +3,12 @@
 
 import { SignInForm } from "@/components/auth/signin-form"
 import { useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Shield, Users, TrendingUp, MessageCircle, CheckCircle } from "lucide-react"
 import Image from "next/image"
-export default function SignInPage() {
+
+function SignInContent() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
   const [mounted, setMounted] = useState(false)
@@ -115,7 +116,6 @@ export default function SignInPage() {
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center space-x-3"
               >
-               
                 <span className="text-2xl font-bold text-gray-900">ComplaintPro</span>
               </motion.div>
             </div>
@@ -128,12 +128,12 @@ export default function SignInPage() {
                 transition={{ delay: 0.2 }}
                 className="text-3xl font-bold text-gray-900"
               >
-                  <Image 
+                <Image 
                   src="/main-logo.png" 
                   alt="GIG Egypt Life Takaful" 
                   width={60} 
                   height={60}
-                  className="object-contain"
+                  className="object-contain inline-block mr-2"
                 />
                 Welcome back
               </motion.h2>
@@ -274,10 +274,8 @@ export default function SignInPage() {
               <motion.span 
                 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent"
                 whileHover={{ scale: 1.02 }}
-                
               >
-                
-               GIG ComplaintPro
+                GIG ComplaintPro
               </motion.span>
             </div>
           </motion.div>
@@ -380,5 +378,22 @@ export default function SignInPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Shield className="h-8 w-8 text-white" />
+          </div>
+          <p className="text-gray-600 font-medium">Loading sign-in page...</p>
+        </div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   )
 }
