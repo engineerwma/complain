@@ -7,9 +7,8 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
     "start": "next start",
-    "build": "npx prisma generate && next build",
-    "postinstall": "npx prisma generate"
     "lint": "eslint",
     "cron:test": "curl -H 'Authorization: Bearer your-cron-secret-here' http://localhost:3000/api/cron"
   },
