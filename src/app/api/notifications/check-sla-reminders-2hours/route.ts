@@ -5,28 +5,27 @@ import { sendSLAReminderEmail } from "@/lib/email"
 export async function GET() {
   try {
     const now = new Date()
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000)
-    const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000)
 
-    // Find complaints created more than 2 hours ago but less than 4 hours ago
-    // that are still not resolved and haven't had a 2-hour reminder
-    const complaintsNeeding2HourReminder = await prisma.complaint.findMany({
+    // Find complaints created more than 1 hour ago but less than 2 hours ago
+    const complaintsNeedingReminder = await prisma.complaint.findMany({
       where: {
         createdAt: {
-          lt: twoHoursAgo,
-          gte: fourHoursAgo
+          lt: oneHourAgo,
+          gte: twoHoursAgo
         },
         status: {
           name: {
             not: "RESOLVED"
           }
         },
-        // Only check complaints that haven't had a 2-hour reminder notification in the last 6 hours
+        // Only check complaints that haven't had a 1-hour reminder notification in the last 23 hours
         notifications: {
           none: {
-            type: "SLA_REMINDER_2H",
+            type: "SLA_REMINDER_1H",
             createdAt: {
-              gte: new Date(now.getTime() - 6 * 60 * 60 * 1000) // 6 hours ago
+              gte: new Date(now.getTime() - 23 * 60 * 60 * 1000)
             }
           }
         }
@@ -51,7 +50,7 @@ export async function GET() {
         status: true,
         notifications: {
           where: {
-            type: "SLA_REMINDER_2H"
+            type: "SLA_REMINDER_1H"
           },
           orderBy: {
             createdAt: 'desc'
@@ -64,9 +63,9 @@ export async function GET() {
     let processedCount = 0
     const results = []
 
-    console.log(`📊 Found ${complaintsNeeding2HourReminder.length} complaints needing 2-hour reminder`)
+    console.log(`📊 Found ${complaintsNeedingReminder.length} complaints needing 1-hour reminder`)
 
-    for (const complaint of complaintsNeeding2HourReminder) {
+    for (const complaint of complaintsNeedingReminder) {
       try {
         const hoursSinceCreation = Math.floor(
           (now.getTime() - new Date(complaint.createdAt).getTime()) / (60 * 60 * 1000)
@@ -74,55 +73,63 @@ export async function GET() {
 
         const recipients = new Set<string>()
         
-        // Notify assigned user
         if (complaint.assignedTo?.email) {
           recipients.add(complaint.assignedTo.email)
         }
         
-        // Notify creator if different from assigned user and has email
         if (complaint.createdBy.email && complaint.createdById !== complaint.assignedTo?.id) {
           recipients.add(complaint.createdBy.email)
         }
 
-        // Notify admins
         const admins = await prisma.user.findMany({
           where: { role: "ADMIN" },
           select: { email: true }
         })
-        admins.forEach((admin: any) => { // ✅ Add type annotation here
+        admins.forEach(admin => {
           if (admin.email) recipients.add(admin.email)
         })
 
         if (recipients.size > 0) {
-          // Send email reminder
+          // Create a properly typed complaint object for the email function
+          const emailComplaint = {
+            ...complaint,
+            dueDate: complaint.dueDate || undefined, // Convert null to undefined
+            createdAt: complaint.createdAt,
+            updatedAt: complaint.updatedAt,
+            branch: complaint.branch,
+            lineOfBusiness: complaint.lineOfBusiness,
+            status: complaint.status,
+            createdBy: complaint.createdBy,
+            assignedTo: complaint.assignedTo,
+            notifications: complaint.notifications
+          }
+
           await sendSLAReminderEmail({
             to: Array.from(recipients),
-            complaint: complaint,
+            complaint: emailComplaint,
             hours: hoursSinceCreation
           })
 
-          // Create notifications for relevant users
           if (complaint.assignedTo) {
             await prisma.notification.create({
               data: {
-                title: "SLA Reminder - 2 Hours",
-                message: `Complaint ${complaint.complaintNumber} is still unresolved after ${hoursSinceCreation} hours`,
+                title: "SLA Reminder - 1 Hour",
+                message: `Complaint ${complaint.complaintNumber} is still unresolved after ${hoursSinceCreation} hour${hoursSinceCreation > 1 ? 's' : ''}`,
                 userId: complaint.assignedTo.id,
                 complaintId: complaint.id,
-                type: "SLA_REMINDER_2H"
+                type: "SLA_REMINDER_1H"
               }
             })
           }
 
-          // Create notification for creator if different
           if (complaint.createdById !== complaint.assignedTo?.id) {
             await prisma.notification.create({
               data: {
-                title: "SLA Reminder - 2 Hours",
-                message: `Complaint ${complaint.complaintNumber} you created is still unresolved after ${hoursSinceCreation} hours`,
+                title: "SLA Reminder - 1 Hour",
+                message: `Complaint ${complaint.complaintNumber} you created is still unresolved after ${hoursSinceCreation} hour${hoursSinceCreation > 1 ? 's' : ''}`,
                 userId: complaint.createdById,
                 complaintId: complaint.id,
-                type: "SLA_REMINDER_2H"
+                type: "SLA_REMINDER_1H"
               }
             })
           }
@@ -135,24 +142,23 @@ export async function GET() {
             recipients: Array.from(recipients)
           })
           
-          console.log(`✅ Sent 2-hour reminder for complaint ${complaint.complaintNumber}`)
+          console.log(`✅ Sent 1-hour reminder for complaint ${complaint.complaintNumber}`)
         }
-      } catch (error: any) { // ✅ Also fix this catch block
+      } catch (error) {
         console.error(`❌ Error processing complaint ${complaint.complaintNumber}:`, error)
-        // Continue with next complaint even if one fails
       }
     }
 
     return NextResponse.json({ 
       success: true,
-      message: `Processed ${processedCount} 2-hour SLA reminders`,
+      message: `Processed ${processedCount} 1-hour SLA reminders`,
       processed: processedCount,
-      totalComplaints: complaintsNeeding2HourReminder.length,
+      remindedComplaints: complaintsNeedingReminder.length,
       results,
       timestamp: now.toISOString()
     })
-  } catch (error: any) { // ✅ Fix main catch block too
-    console.error("❌ Error checking 2-hour SLA reminders:", error)
+  } catch (error) {
+    console.error("❌ Error checking SLA reminders:", error)
     return NextResponse.json(
       { 
         success: false,
