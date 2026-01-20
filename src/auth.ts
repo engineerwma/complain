@@ -4,7 +4,10 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { Role, Branch, LineOfBusiness } from "@prisma/client"
+import { Branch, LineOfBusiness } from "@prisma/client"
+
+// Define Role type based on your application
+type Role = "ADMIN" | "USER"
 
 declare module "next-auth" {
   interface Session {
@@ -75,7 +78,7 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role,
+            role: user.role as Role, // Cast to Role type
             branch: user.branch,
             lineOfBusiness: user.lineOfBusiness
           }
@@ -102,7 +105,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub!
-        session.user.role = token.role
+        session.user.role = token.role as Role // Cast to Role type
         session.user.branch = token.branch
         session.user.lineOfBusiness = token.lineOfBusiness
       }
