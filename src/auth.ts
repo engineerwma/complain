@@ -4,10 +4,11 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { Branch, LineOfBusiness } from "@prisma/client"
 
-// Define Role type based on your application
+// Define types based on your application
 type Role = "ADMIN" | "USER"
+type Branch = any // Replace with actual type if needed
+type LineOfBusiness = any // Replace with actual type if needed
 
 declare module "next-auth" {
   interface Session {
@@ -78,9 +79,9 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role as Role, // Cast to Role type
-            branch: user.branch,
-            lineOfBusiness: user.lineOfBusiness
+            role: user.role as Role,
+            branch: user.branch as any,
+            lineOfBusiness: user.lineOfBusiness as any
           }
         } catch (error) {
           console.error("Authentication error:", error)
@@ -105,9 +106,9 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.sub!
-        session.user.role = token.role as Role // Cast to Role type
-        session.user.branch = token.branch
-        session.user.lineOfBusiness = token.lineOfBusiness
+        session.user.role = token.role as Role
+        session.user.branch = token.branch as any
+        session.user.lineOfBusiness = token.lineOfBusiness as any
       }
       return session
     }
@@ -118,8 +119,7 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
-  // Add these for better browser compatibility
-  useSecureCookies: process.env.NODE_ENV === "production", // Only use secure cookies in production
+  useSecureCookies: process.env.NODE_ENV === "production",
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -127,8 +127,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined // Only set domain in production
+        secure: process.env.NODE_ENV === 'production'
       }
     }
   }
